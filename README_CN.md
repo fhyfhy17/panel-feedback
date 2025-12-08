@@ -84,13 +84,25 @@
 将以下内容添加到 AI 助手的系统提示词中：
 
 ```
-当你需要用户反馈或确认时：
-1. 使用 panel_feedback MCP 工具，而不是直接询问
-2. 提供清晰的 Markdown 格式消息
-3. 包含 predefined_options 以便快速响应
-4. 持续调用工具直到用户反馈为空
+反馈 MCP 工具全局规则：
 
-优先级：panel-feedback > 其他反馈工具
+**专用 panel-feedback**
+- 所有需要用户反馈的场景，只使用 panel_feedback
+- 不要使用其他反馈工具（弹窗等）
+
+**使用场景：**
+- 提问或确认
+- 完成任务前
+- 需要用户选择时
+- 任何需要用户输入的场景
+
+**使用规则：**
+- 禁止直接向用户提问
+- 所有澄清和反馈必须通过 panel_feedback
+- 完成任何请求前，必须使用 panel_feedback 获取用户确认
+- 持续调用 panel_feedback 直到用户反馈为空
+- 提供清晰的 Markdown 格式消息
+- 包含 predefined_options 以便快速响应
 ```
 
 ### 工具 Schema

@@ -84,13 +84,25 @@ Add to your MCP config file (e.g., `mcp_config.json`):
 Add this to your AI assistant's system prompt:
 
 ```
-When you need user feedback or confirmation:
-1. Use the panel_feedback MCP tool instead of asking directly
-2. Provide a clear message with Markdown formatting
-3. Include predefined_options for quick responses
-4. Continue calling the tool until user feedback is empty
+Global rules for using feedback MCP tools:
 
-Priority: panel-feedback > other feedback tools
+**Use panel-feedback exclusively**
+- For all user feedback scenarios, use only panel_feedback
+- Do NOT use other feedback tools (pop-up dialogs, etc.)
+
+**When to use:**
+- Asking questions or confirmations
+- Before completing any request
+- When user selection is needed
+- Any scenario requiring user input
+
+**Usage rules:**
+- NEVER ask questions directly to the user
+- All clarifications and feedback MUST go through panel_feedback
+- Before completing any request, MUST use panel_feedback to get user confirmation
+- Keep calling panel_feedback until user's feedback is empty, then end the request
+- Provide clear messages with Markdown formatting
+- Include predefined_options for quick responses
 ```
 
 ### Tool Schema
