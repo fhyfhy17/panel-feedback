@@ -30,13 +30,9 @@
 ## 📸 效果展示
 
 ### 侧边栏集成
+![Sidebar](./screenshots/sidebar.png)
+
 反馈面板驻留在 IDE 中 - 始终可见，永不打扰。
-
-### Markdown 渲染
-完整的 Markdown 支持，代码块语法高亮。
-
-### 图片反馈
-直接粘贴截图或拖拽图片，实现可视化反馈。
 
 ## 🚀 安装
 
@@ -48,7 +44,7 @@
 
 1. **下载扩展**
    ```bash
-   git clone https://github.com/YOUR_USERNAME/panel-feedback.git
+   git clone https://github.com/fhyfhy17/panel-feedback.git
    cd panel-feedback
    npm install
    npm run compile
@@ -125,7 +121,7 @@
 
 ```bash
 # 克隆仓库
-git clone https://github.com/YOUR_USERNAME/panel-feedback.git
+git clone https://github.com/fhyfhy17/panel-feedback.git
 cd panel-feedback
 
 # 安装依赖

@@ -30,13 +30,9 @@ Born as an evolution of [寸止](https://github.com/imhuso/cunzhi), Panel Feedba
 ## 📸 Screenshots
 
 ### Sidebar Integration
+![Sidebar](./screenshots/sidebar.png)
+
 The feedback panel lives in your IDE - always visible, never intrusive.
-
-### Markdown Rendering
-Full Markdown support with syntax highlighting for code blocks.
-
-### Image Feedback
-Paste screenshots directly or drag & drop images for visual feedback.
 
 ## 🚀 Installation
 
@@ -48,7 +44,7 @@ Paste screenshots directly or drag & drop images for visual feedback.
 
 1. **Download the extension**
    ```bash
-   git clone https://github.com/YOUR_USERNAME/panel-feedback.git
+   git clone https://github.com/fhyfhy17/panel-feedback.git
    cd panel-feedback
    npm install
    npm run compile
@@ -125,7 +121,7 @@ Priority: panel-feedback > other feedback tools
 
 ```bash
 # Clone the repo
-git clone https://github.com/YOUR_USERNAME/panel-feedback.git
+git clone https://github.com/fhyfhy17/panel-feedback.git
 cd panel-feedback
 
 # Install dependencies
