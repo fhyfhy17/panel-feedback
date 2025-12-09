@@ -1,0 +1,61 @@
+{
+  "name": "windsurf-feedback-panel",
+  "displayName": "Windsurf Feedback Panel",
+  "description": "侧边栏交互反馈面板，支持 MCP 协议",
+  "version": "1.0.1",
+  "publisher": "fhyfhy17",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/fhyfhy17/panel-feedback.git"
+  },
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "categories": ["Other"],
+  "activationEvents": ["onStartupFinished"],
+  "main": "./out/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "feedback-panel",
+          "title": "Panel Feedback",
+          "icon": "resources/feedback.svg"
+        }
+      ]
+    },
+    "views": {
+      "feedback-panel": [
+        {
+          "type": "webview",
+          "id": "feedbackPanel.view",
+          "name": "Panel Feedback"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "feedbackPanel.submit",
+        "title": "Submit Feedback"
+      },
+      {
+        "command": "feedbackPanel.copyMcpConfig",
+        "title": "Panel Feedback: Copy MCP Config"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/node": "^18.0.0",
+    "@types/vscode": "^1.74.0",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.24.0"
+  }
+}
