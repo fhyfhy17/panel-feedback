@@ -1,9 +1,11 @@
 # Panel Feedback 💬
 
+[🇨🇳 中文文档](./README_CN.md) | [🇺🇸 English](#panel-feedback-)
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![MCP](https://img.shields.io/badge/MCP-Compatible-blue.svg)](https://modelcontextprotocol.io)
+[![NPM Package](https://img.shields.io/badge/NPM-panel--feedback--mcp-red.svg)](https://www.npmjs.com/package/panel-feedback-mcp)
 [![VS Code](https://img.shields.io/badge/VS%20Code-Extension-007ACC.svg)](https://code.visualstudio.com/)
-[![Windsurf](https://img.shields.io/badge/Windsurf-Compatible-green.svg)](https://codeium.com/windsurf)
+[![MCP](https://img.shields.io/badge/MCP-Compatible-blue.svg)](https://modelcontextprotocol.io)
 
 > **The Next-Gen AI Feedback Experience - Embedded in Your IDE**
 > 
@@ -52,49 +54,61 @@ The feedback panel lives in your IDE - always visible, never intrusive.
 
 ## 🚀 Installation
 
-### ⚡ Quick Start (Recommended)
+### 🎯 Method 1: NPM Package (Recommended ⭐)
+
+**Super Simple - Just 3 Steps:**
+
+1. **Install Extension**: Download from [Releases](https://github.com/fhyfhy17/panel-feedback/releases) or install from marketplace
+2. **Install MCP Server**: 
+   ```bash
+   npm install -g panel-feedback-mcp
+   ```
+3. **Auto-Configure**: `Cmd+Shift+P` → `Panel Feedback: Copy MCP Config` → Choose "NPM Package"
+
+✨ **That's it!** No path configuration needed.
+
+### 📦 Method 2: Direct Extension
 
 1. **Download** the `.vsix` file from [Releases](https://github.com/fhyfhy17/panel-feedback/releases)
 2. **Install** - Choose one method:
-   - **GUI**: Open VS Code/Windsurf → `Cmd+Shift+P` → `Extensions: Install from VSIX...` → Select the file
-   - **CLI**: `code --install-extension windsurf-feedback-panel-1.0.1.vsix`
-3. **Configure MCP**: `Cmd+Shift+P` → `Panel Feedback: Copy MCP Config` → Paste into `mcp_config.json`
+   - **GUI**: Open VS Code/Windsurf → `Cmd+Shift+P` → `Extensions: Install from VSIX...` → Select the file  
+   - **CLI**: `code --install-extension windsurf-feedback-panel-1.1.0.vsix`
+3. **Configure MCP**: `Cmd+Shift+P` → `Panel Feedback: Copy MCP Config` → Choose "Extension Path" → Paste into `mcp_config.json`
 4. **Done!** The panel appears in your sidebar.
 
 ---
 
-### Build from Source
+### 🛠️ Build from Source
 
-1. **Download the extension**
-   ```bash
-   git clone https://github.com/fhyfhy17/panel-feedback.git
-   cd panel-feedback
-   npm install
-   npm run compile
-   ```
+```bash
+git clone https://github.com/fhyfhy17/panel-feedback.git
+cd panel-feedback
+npm install
+npm run compile
+npx vsce package --allow-missing-repository
+code --install-extension windsurf-feedback-panel-1.1.0.vsix
+```
 
-2. **Package the extension**
-   ```bash
-   npx vsce package --allow-missing-repository
-   ```
+### MCP Configuration Examples
 
-3. **Install in your IDE**
-   ```bash
-   code --install-extension panel-feedback-1.0.0.vsix
-   # Or for Windsurf
-   windsurf --install-extension panel-feedback-1.0.0.vsix
-   ```
+**NPM Package (Recommended):**
+```json
+{
+  "mcpServers": {
+    "panel-feedback": {
+      "command": "panel-feedback-mcp"
+    }
+  }
+}
+```
 
-### MCP Configuration
-
-Add to your MCP config file (e.g., `mcp_config.json`):
-
+**Extension Path:**
 ```json
 {
   "mcpServers": {
     "panel-feedback": {
       "command": "node",
-      "args": ["/path/to/panel-feedback/mcp-stdio-wrapper.js"]
+      "args": ["/path/to/extension/mcp-stdio-wrapper.js"]
     }
   }
 }

@@ -1,13 +1,16 @@
 # Panel Feedback 💬
 
+[🇺🇸 English](./README.md) | [🇨🇳 中文文档](#panel-feedback-)
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![MCP](https://img.shields.io/badge/MCP-Compatible-blue.svg)](https://modelcontextprotocol.io)
+[![NPM Package](https://img.shields.io/badge/NPM-panel--feedback--mcp-red.svg)](https://www.npmjs.com/package/panel-feedback-mcp)
 [![VS Code](https://img.shields.io/badge/VS%20Code-Extension-007ACC.svg)](https://code.visualstudio.com/)
+[![MCP](https://img.shields.io/badge/MCP-Compatible-blue.svg)](https://modelcontextprotocol.io)
 [![Windsurf](https://img.shields.io/badge/Windsurf-Compatible-green.svg)](https://codeium.com/windsurf)
 
-> **下一代 AI 反馈体验 - 内嵌于你的 IDE**
+> **下一代 AI 反馈体验 - 嵌入式 IDE 面板**
 > 
-> *告别弹窗，专注编码*
+> *告别弹窗，专注流程。*
 
 🚫 **厌倦了弹窗打断你的编码思路？**  
 🚫 **讨厌对话框抢占你的焦点？**  
@@ -52,49 +55,58 @@
 
 ## 🚀 安装
 
-### ⚡ 快速开始（推荐）
+### 🎯 方式一：NPM 包（最简单）
+
+1. **安装扩展**：从 [VS Code 应用市场](https://marketplace.visualstudio.com) 搜索 "Panel Feedback"
+2. **安装 MCP 服务器**：
+   ```bash
+   npm install -g panel-feedback-mcp
+   ```
+3. **配置 MCP**：`Cmd+Shift+P` → `Panel Feedback: Copy MCP Config` → 选择 "NPM Package" → 粘贴到 `mcp_config.json`
+4. **完成！** 侧边栏出现面板。
+
+### 📦 方式二：直接安装扩展
 
 1. **下载** `.vsix` 文件：[Releases](https://github.com/fhyfhy17/panel-feedback/releases)
-2. **安装** - 任选一种方式：
+2. **安装** - 选择一种方式：
    - **图形界面**：打开 VS Code/Windsurf → `Cmd+Shift+P` → `Extensions: Install from VSIX...` → 选择文件
-   - **命令行**：`code --install-extension windsurf-feedback-panel-1.0.1.vsix`
-3. **配置 MCP**：`Cmd+Shift+P` → `Panel Feedback: Copy MCP Config` → 粘贴到 `mcp_config.json`
-4. **完成！** 侧边栏出现面板
+   - **命令行**：`code --install-extension windsurf-feedback-panel-1.1.0.vsix`
+3. **配置 MCP**：`Cmd+Shift+P` → `Panel Feedback: Copy MCP Config` → 选择 "Extension Path" → 粘贴到 `mcp_config.json`
+4. **完成！** 侧边栏出现面板。
 
 ---
 
-### 从源码构建
+### 🛠️ 从源码构建
 
-1. **下载扩展**
-   ```bash
-   git clone https://github.com/fhyfhy17/panel-feedback.git
-   cd panel-feedback
-   npm install
-   npm run compile
-   ```
+```bash
+git clone https://github.com/fhyfhy17/panel-feedback.git
+cd panel-feedback
+npm install
+npm run compile
+npx vsce package --allow-missing-repository
+code --install-extension windsurf-feedback-panel-2.0.0.vsix
+```
 
-2. **打包扩展**
-   ```bash
-   npx vsce package --allow-missing-repository
-   ```
+### MCP 配置示例
 
-3. **安装到 IDE**
-   ```bash
-   code --install-extension panel-feedback-1.0.0.vsix
-   # 或者 Windsurf
-   windsurf --install-extension panel-feedback-1.0.0.vsix
-   ```
+**NPM 包方式（推荐）：**
+```json
+{
+  "mcpServers": {
+    "panel-feedback": {
+      "command": "panel-feedback-mcp"
+    }
+  }
+}
+```
 
-### MCP 配置
-
-添加到你的 MCP 配置文件（如 `mcp_config.json`）：
-
+**扩展路径方式：**
 ```json
 {
   "mcpServers": {
     "panel-feedback": {
       "command": "node",
-      "args": ["/path/to/panel-feedback/mcp-stdio-wrapper.js"]
+      "args": ["/path/to/extension/mcp-stdio-wrapper.js"]
     }
   }
 }

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * Stdio wrapper for windsurf-feedback-panel MCP
- * 使用轮询机制等待用户反馈，支持长时间等待（几天）
+ * Global npm executable for panel-feedback MCP server
+ * 使用轮询机制等待用户反馈，支持长时间等待
  */
 
 const http = require('http');
@@ -89,7 +89,7 @@ async function pollForResult(requestId) {
                 connectionRefusedCount++;
                 // 连续多次连接失败才报错
                 if (connectionRefusedCount > 10) {
-                    throw new Error('扩展未启动。请先在 Windsurf 中打开 AI Feedback 面板。');
+                    throw new Error('Panel Feedback extension not started. Please open the AI Feedback panel in VS Code/Windsurf first.');
                 }
             } else {
                 connectionRefusedCount = 0;  // 重置计数
@@ -103,7 +103,7 @@ async function pollForResult(requestId) {
             }
         } catch (err) {
             // 非连接拒绝的错误，记录但继续轮询
-            if (!err.message.includes('扩展未启动')) {
+            if (!err.message.includes('Panel Feedback extension not started')) {
                 process.stderr.write(`Poll error: ${err.message}\n`);
             } else {
                 throw err;  // 连接拒绝太多次，抛出错误
@@ -132,7 +132,7 @@ async function handleToolCall(mcpId, params) {
             id: mcpId,
             error: {
                 code: -32000,
-                message: '扩展未启动。请先在 Windsurf 中打开 AI Feedback 面板。'
+                message: 'Panel Feedback extension not started. Please open the AI Feedback panel in VS Code/Windsurf first.'
             }
         };
     }
@@ -172,7 +172,7 @@ async function handleOtherRequest(request) {
             id: request.id,
             error: {
                 code: -32000,
-                message: '扩展未启动。请先在 Windsurf 中打开 AI Feedback 面板。'
+                message: 'Panel Feedback extension not started. Please open the AI Feedback panel in VS Code/Windsurf first.'
             }
         };
     }
@@ -212,4 +212,4 @@ rl.on('line', async (line) => {
 });
 
 // 启动时输出就绪信息
-process.stderr.write('windsurf-feedback-panel MCP wrapper started (polling mode)\n');
+process.stderr.write('panel-feedback-mcp server started (polling mode)\n');

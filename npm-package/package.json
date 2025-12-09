@@ -1,0 +1,29 @@
+{
+  "name": "panel-feedback-mcp",
+  "version": "1.0.0",
+  "description": "MCP server for Panel Feedback VS Code extension",
+  "main": "index.js",
+  "bin": {
+    "panel-feedback-mcp": "./bin/panel-feedback-mcp"
+  },
+  "scripts": {
+    "start": "node ./bin/panel-feedback-mcp"
+  },
+  "keywords": [
+    "mcp",
+    "panel-feedback", 
+    "vscode",
+    "windsurf",
+    "ai-feedback"
+  ],
+  "author": "fhyfhy17",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/fhyfhy17/panel-feedback.git"
+  },
+  "dependencies": {},
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}

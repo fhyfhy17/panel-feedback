@@ -2,6 +2,12 @@
 .vscode-test/**
 src/**
 .gitignore
-tsconfig.json
+.yarnrc
+vsc-extension-quickstart.md
+npm-package/**
+scripts/**
+RELEASE_NOTES.md
+*.tgz
+*.logjson
 node_modules/**
 !node_modules/@anthropic-ai/**

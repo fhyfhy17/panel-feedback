@@ -15,6 +15,7 @@ export class FeedbackPanelProvider implements vscode.WebviewViewProvider {
     private _pendingResolve?: (value: string) => void;
     private _currentMessage: string = '';
     private _currentOptions: string[] = [];
+    private _currentRequestId?: string;
     private _chatHistory: ChatMessage[] = [];
 
     constructor(private readonly _extensionUri: vscode.Uri) {}
@@ -82,9 +83,10 @@ export class FeedbackPanelProvider implements vscode.WebviewViewProvider {
         this._updateHistoryInView();
     }
 
-    public async showMessage(message: string, options?: string[]): Promise<string> {
+    public async showMessage(message: string, options?: string[], requestId?: string): Promise<string> {
         this._currentMessage = message;
         this._currentOptions = options || [];
+        this._currentRequestId = requestId;
 
         // 记录 AI 消息到历史
         this._chatHistory.push({
