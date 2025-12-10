@@ -1,3 +1,15 @@
+# Panel Feedback v1.1.3
+
+## 🐛 Bug Fix
+
+### Fixed: MCP server fails to start due to PATH issues
+- **Root Cause**: When using `"command": "node"` in MCP config, the IDE may not find node because its PATH environment differs from terminal
+- **Affected Users**: nvm users, M1/M2 Mac with Homebrew, or any non-standard node installation
+- **Solution**: `Copy MCP Config` command now auto-detects node's full path using `which node`, with fallback to `/usr/local/bin/node`
+- **Documentation**: Updated README to recommend using full node path in examples
+
+---
+
 # Panel Feedback v1.1.1
 
 ## 🐛 Bug Fix

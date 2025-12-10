@@ -83,12 +83,14 @@ Example:
 {
   "mcpServers": {
     "panel-feedback": {
-      "command": "node",
+      "command": "/usr/local/bin/node",
       "args": ["/path/to/extension/mcp-stdio-wrapper.js"]
     }
   }
 }
 ```
+
+> **Note**: Use the full path to node (e.g., `/usr/local/bin/node`) instead of just `node` to avoid PATH issues when IDE starts MCP servers.
 
 ✅ Now your AI can **call the panel_feedback tool**
 

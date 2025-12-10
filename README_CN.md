@@ -84,12 +84,14 @@
 {
   "mcpServers": {
     "panel-feedback": {
-      "command": "node",
+      "command": "/usr/local/bin/node",
       "args": ["/path/to/extension/mcp-stdio-wrapper.js"]
     }
   }
 }
 ```
+
+> **注意**：建议使用 node 的完整路径（如 `/usr/local/bin/node`）而不是只写 `node`，以避免 IDE 启动 MCP 服务器时的 PATH 环境变量问题。
 
 ✅ 现在 AI 可以 **调用 panel_feedback 工具**
 

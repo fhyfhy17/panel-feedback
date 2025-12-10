@@ -1,6 +1,24 @@
 import * as vscode from 'vscode';
 import { FeedbackPanelProvider } from './FeedbackPanelProvider';
 import { MCPServer } from './mcpServer';
+import { execSync } from 'child_process';
+
+/**
+ * 获取 node 可执行文件的完整路径
+ * 优先动态检测，失败则回退到常见路径
+ */
+function getNodePath(): string {
+    try {
+        const nodePath = execSync('which node', { encoding: 'utf-8' }).trim();
+        if (nodePath) {
+            return nodePath;
+        }
+    } catch (e) {
+        // 忽略错误
+    }
+    // 回退到常见路径
+    return '/usr/local/bin/node';
+}
 
 let mcpServer: MCPServer | undefined;
 
@@ -48,9 +66,10 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand('feedbackPanel.copyMcpConfig', async () => {
             // 直接使用扩展路径方式
             const wrapperPath = vscode.Uri.joinPath(context.extensionUri, 'mcp-stdio-wrapper.js').fsPath;
+            const nodePath = getNodePath();
             const config = {
                 "panel-feedback": {
-                    "command": "node",
+                    "command": nodePath,
                     "args": [wrapperPath]
                 }
             };
