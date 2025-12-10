@@ -192,12 +192,58 @@ rl.on('line', async (line) => {
         
         let response;
         
-        // tools/call 请求使用轮询机制
-        if (method === 'tools/call' && params?.name === 'panel_feedback') {
+        // 本地处理 initialize（不依赖扩展）
+        if (method === 'initialize') {
+            response = {
+                jsonrpc: '2.0',
+                id,
+                result: {
+                    protocolVersion: '2024-11-05',
+                    serverInfo: { name: 'panel-feedback', version: '1.1.0' },
+                    capabilities: { tools: {} }
+                }
+            };
+        }
+        // 本地处理 tools/list（不依赖扩展）
+        else if (method === 'tools/list') {
+            response = {
+                jsonrpc: '2.0',
+                id,
+                result: {
+                    tools: [{
+                        name: 'panel_feedback',
+                        description: '在 IDE 侧边栏显示消息并获取用户反馈，支持预定义选项和图片上传',
+                        inputSchema: {
+                            type: 'object',
+                            properties: {
+                                message: {
+                                    type: 'string',
+                                    description: '要显示给用户的消息，支持 Markdown 格式'
+                                },
+                                predefined_options: {
+                                    type: 'array',
+                                    items: { type: 'string' },
+                                    description: '预定义的选项按钮列表'
+                                }
+                            },
+                            required: ['message']
+                        }
+                    }]
+                }
+            };
+        }
+        // 本地处理 notifications/initialized
+        else if (method === 'notifications/initialized') {
+            // 通知类请求不需要响应
+            return;
+        }
+        // tools/call 请求使用轮询机制（需要扩展）
+        else if (method === 'tools/call' && params?.name === 'panel_feedback') {
             response = await handleToolCall(id, params);
-        } else {
-            // 其他请求直接转发
-            response = await handleOtherRequest(request);
+        }
+        // 其他请求本地处理
+        else {
+            response = { jsonrpc: '2.0', id, result: {} };
         }
         
         respond(response);

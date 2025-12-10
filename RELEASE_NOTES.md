@@ -1,3 +1,14 @@
+# Panel Feedback v1.1.1
+
+## 🐛 Bug Fix
+
+### Fixed: MCP shows yellow status with 0 tools
+- **Root Cause**: `mcp-stdio-wrapper.js` forwarded all requests (including `initialize` and `tools/list`) to extension's HTTP server on port 19876, but extension may not be activated yet
+- **Solution**: Wrapper now handles `initialize` and `tools/list` locally, only forwards `tools/call` to extension
+- MCP will now show **green status with 1 tool** even when extension panel is not opened
+
+---
+
 # Panel Feedback v2.0.0 🎉
 
 ## 🚀 Major Updates
