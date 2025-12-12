@@ -382,19 +382,20 @@ export class FeedbackPanelProvider implements vscode.WebviewViewProvider {
         }
         .settings-btn {
             position: fixed;
-            top: -28px;
+            top: 4px;
             right: 4px;
-            padding: 2px 6px;
-            font-size: 13px;
+            padding: 4px 8px;
+            font-size: 14px;
             background: transparent;
             color: var(--vscode-descriptionForeground);
             border: none;
             cursor: pointer;
-            opacity: 0.6;
+            opacity: 0.7;
             z-index: 1000;
         }
         .settings-btn:hover {
             opacity: 1;
+            background: var(--vscode-toolbar-hoverBackground);
         }
         .settings-modal {
             display: none;
