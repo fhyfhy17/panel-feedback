@@ -479,7 +479,7 @@ export class FeedbackPanelProvider implements vscode.WebviewViewProvider {
         }
         .copy-btn {
             position: absolute;
-            top: 8px;
+            bottom: 8px;
             right: 8px;
             padding: 4px 6px;
             background: transparent;
