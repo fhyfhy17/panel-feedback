@@ -46,8 +46,77 @@ export class FeedbackPanelProvider implements vscode.WebviewViewProvider {
                 case 'clearHistory':
                     this.clearHistory();
                     break;
+                case 'getVersion':
+                    this._sendVersionInfo();
+                    break;
+                case 'checkUpdate':
+                    this._checkForUpdates();
+                    break;
             }
         });
+    }
+
+    private _sendVersionInfo() {
+        const ext = vscode.extensions.getExtension('fhyfhy17.windsurf-feedback-panel');
+        const version = ext?.packageJSON.version || 'unknown';
+        this._view?.webview.postMessage({ type: 'versionInfo', version });
+    }
+
+    private _checkForUpdates() {
+        const ext = vscode.extensions.getExtension('fhyfhy17.windsurf-feedback-panel');
+        const currentVersion = ext?.packageJSON.version || '0.0.0';
+        
+        const https = require('https');
+        const options = {
+            hostname: 'api.github.com',
+            path: '/repos/fhyfhy17/panel-feedback/releases/latest',
+            headers: { 'User-Agent': 'VSCode-Extension' }
+        };
+        
+        https.get(options, (res: any) => {
+            let data = '';
+            res.on('data', (chunk: string) => data += chunk);
+            res.on('end', () => {
+                try {
+                    const release = JSON.parse(data);
+                    const latestVersion = release.tag_name?.replace('v', '') || '';
+                    const hasUpdate = this._compareVersions(latestVersion, currentVersion) > 0;
+                    this._view?.webview.postMessage({ 
+                        type: 'updateResult', 
+                        hasUpdate, 
+                        latestVersion,
+                        downloadUrl: release.html_url 
+                    });
+                    
+                    if (hasUpdate) {
+                        vscode.window.showInformationMessage(
+                            `🎉 Panel Feedback v${latestVersion} is available!`,
+                            'Download'
+                        ).then(action => {
+                            if (action === 'Download') {
+                                vscode.env.openExternal(vscode.Uri.parse(release.html_url));
+                            }
+                        });
+                    }
+                } catch (e) {
+                    this._view?.webview.postMessage({ type: 'updateResult', hasUpdate: false });
+                }
+            });
+        }).on('error', () => {
+            this._view?.webview.postMessage({ type: 'updateResult', hasUpdate: false });
+        });
+    }
+
+    private _compareVersions(v1: string, v2: string): number {
+        const parts1 = v1.split('.').map(Number);
+        const parts2 = v2.split('.').map(Number);
+        for (let i = 0; i < Math.max(parts1.length, parts2.length); i++) {
+            const p1 = parts1[i] || 0;
+            const p2 = parts2[i] || 0;
+            if (p1 > p2) return 1;
+            if (p1 < p2) return -1;
+        }
+        return 0;
     }
 
     private _handleSubmit(text: string, images: string[]) {
@@ -227,6 +296,88 @@ export class FeedbackPanelProvider implements vscode.WebviewViewProvider {
             opacity: 1;
             background: var(--vscode-button-secondaryBackground);
         }
+        .settings-btn {
+            position: fixed;
+            top: 8px;
+            right: 8px;
+            padding: 4px 8px;
+            font-size: 14px;
+            background: transparent;
+            color: var(--vscode-descriptionForeground);
+            border: none;
+            cursor: pointer;
+            opacity: 0.7;
+            z-index: 100;
+        }
+        .settings-btn:hover {
+            opacity: 1;
+        }
+        .settings-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 200;
+            justify-content: center;
+            align-items: center;
+        }
+        .settings-modal.show {
+            display: flex;
+        }
+        .settings-content {
+            background: var(--vscode-editor-background);
+            border: 1px solid var(--vscode-widget-border);
+            border-radius: 8px;
+            padding: 20px;
+            min-width: 280px;
+            max-width: 90%;
+        }
+        .settings-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .settings-close {
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            color: var(--vscode-foreground);
+            opacity: 0.7;
+        }
+        .settings-close:hover {
+            opacity: 1;
+        }
+        .settings-item {
+            padding: 10px 0;
+            border-bottom: 1px solid var(--vscode-widget-border);
+        }
+        .settings-item:last-child {
+            border-bottom: none;
+        }
+        .settings-version {
+            color: var(--vscode-descriptionForeground);
+            font-size: 12px;
+        }
+        .settings-action {
+            padding: 8px 16px;
+            background: var(--vscode-button-background);
+            color: var(--vscode-button-foreground);
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 8px;
+        }
+        .settings-action:hover {
+            background: var(--vscode-button-hoverBackground);
+        }
         .current-question {
             background: var(--vscode-editor-background);
             border: 1px solid var(--vscode-focusBorder);
@@ -394,6 +545,27 @@ export class FeedbackPanelProvider implements vscode.WebviewViewProvider {
     </style>
 </head>
 <body>
+    <button id="settingsBtn" class="settings-btn" title="Settings">⚙️</button>
+
+    <div id="settingsModal" class="settings-modal">
+        <div class="settings-content">
+            <div class="settings-title">
+                <span>⚙️ About</span>
+                <button class="settings-close" id="closeSettings">×</button>
+            </div>
+            <div class="settings-item">
+                <div><strong>Panel Feedback</strong></div>
+                <div class="settings-version" id="versionText">Version: loading...</div>
+            </div>
+            <div class="settings-item">
+                <button class="settings-action" id="checkUpdateBtn">🔄 Check for Updates</button>
+            </div>
+            <div class="settings-item">
+                <a href="https://github.com/fhyfhy17/panel-feedback" style="color: var(--vscode-textLink-foreground);">GitHub Repository</a>
+            </div>
+        </div>
+    </div>
+
     <div id="emptyState" class="empty-state">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
@@ -760,6 +932,34 @@ export class FeedbackPanelProvider implements vscode.WebviewViewProvider {
             chatHistory.style.display = 'none';
         };
 
+        // 设置按钮
+        const settingsBtn = document.getElementById('settingsBtn');
+        const settingsModal = document.getElementById('settingsModal');
+        const closeSettings = document.getElementById('closeSettings');
+        const checkUpdateBtn = document.getElementById('checkUpdateBtn');
+        const versionText = document.getElementById('versionText');
+
+        settingsBtn.onclick = () => {
+            settingsModal.classList.add('show');
+            vscode.postMessage({ type: 'getVersion' });
+        };
+
+        closeSettings.onclick = () => {
+            settingsModal.classList.remove('show');
+        };
+
+        settingsModal.onclick = (e) => {
+            if (e.target === settingsModal) {
+                settingsModal.classList.remove('show');
+            }
+        };
+
+        checkUpdateBtn.onclick = () => {
+            checkUpdateBtn.textContent = '🔄 Checking...';
+            checkUpdateBtn.disabled = true;
+            vscode.postMessage({ type: 'checkUpdate' });
+        };
+
         // 监听来自扩展的消息
         window.addEventListener('message', event => {
             const data = event.data;
@@ -774,6 +974,20 @@ export class FeedbackPanelProvider implements vscode.WebviewViewProvider {
                     historyData = data.history || [];
                     // 更新历史时显示全部（包括最新用户回复）
                     renderHistory(historyData, true);
+                    break;
+                case 'versionInfo':
+                    versionText.textContent = 'Version: ' + data.version;
+                    break;
+                case 'updateResult':
+                    checkUpdateBtn.disabled = false;
+                    if (data.hasUpdate) {
+                        checkUpdateBtn.textContent = '🎉 v' + data.latestVersion + ' available!';
+                    } else {
+                        checkUpdateBtn.textContent = '✅ Up to date';
+                        setTimeout(() => {
+                            checkUpdateBtn.textContent = '🔄 Check for Updates';
+                        }, 3000);
+                    }
                     break;
             }
         });
