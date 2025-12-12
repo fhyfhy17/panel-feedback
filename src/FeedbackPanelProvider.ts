@@ -682,8 +682,6 @@ export class FeedbackPanelProvider implements vscode.WebviewViewProvider {
                 placeholder="Type your feedback, paste image (Ctrl+V)..."
             ></textarea>
             <div class="toolbar">
-                <input type="file" id="fileInput" accept="image/*" multiple style="display: none;">
-                <button class="toolbar-btn" id="uploadBtn">📁 Upload</button>
                 <button class="submit-btn" id="submitBtn">Submit</button>
             </div>
         </div>
@@ -699,9 +697,7 @@ export class FeedbackPanelProvider implements vscode.WebviewViewProvider {
         const feedbackInput = document.getElementById('feedbackInput');
         const imagePreview = document.getElementById('imagePreview');
         const submitBtn = document.getElementById('submitBtn');
-                const uploadBtn = document.getElementById('uploadBtn');
-        const fileInput = document.getElementById('fileInput');
-        const dropZone = document.getElementById('dropZone');
+                        const dropZone = document.getElementById('dropZone');
         const chatHistory = document.getElementById('chatHistory');
         const clearHistoryBtn = document.getElementById('clearHistoryBtn');
         const currentQuestion = document.getElementById('currentQuestion');
@@ -980,17 +976,6 @@ export class FeedbackPanelProvider implements vscode.WebviewViewProvider {
                 });
             }
         });
-
-        // 文件上传
-        uploadBtn.onclick = () => fileInput.click();
-        fileInput.onchange = (e) => {
-            const files = e.target.files;
-            Array.from(files).forEach(file => {
-                const reader = new FileReader();
-                reader.onload = () => addImage(reader.result);
-                reader.readAsDataURL(file);
-            });
-        };
 
         // 提交按钮
         submitBtn.onclick = submit;
