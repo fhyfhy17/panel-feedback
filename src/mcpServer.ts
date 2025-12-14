@@ -1,6 +1,21 @@
 import * as http from 'http';
 import * as vscode from 'vscode';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as os from 'os';
 import { FeedbackPanelProvider } from './FeedbackPanelProvider';
+
+// 端口注册表接口
+interface PortRegistryEntry {
+    port: number;
+    workspace: string;
+    lastActive: number;
+    pid: number;
+}
+
+interface PortRegistry {
+    windows: PortRegistryEntry[];
+}
 
 interface MCPRequest {
     jsonrpc: string;
@@ -30,11 +45,22 @@ interface PendingRequest {
 
 export class MCPServer {
     private server: http.Server | null = null;
-    private port = 19876;
+    private port: number = 0;
     private pendingRequests: Map<string, PendingRequest> = new Map();
     private context: vscode.ExtensionContext | null = null;
+    private heartbeatInterval: NodeJS.Timeout | null = null;
+    private workspace: string = '';
+    
+    // 端口范围
+    private static readonly PORT_MIN = 19876;
+    private static readonly PORT_MAX = 19899;
+    private static readonly REGISTRY_DIR = path.join(os.homedir(), '.panel-feedback');
+    private static readonly REGISTRY_FILE = path.join(MCPServer.REGISTRY_DIR, 'ports.json');
 
-    constructor(private provider: FeedbackPanelProvider) {}
+    constructor(private provider: FeedbackPanelProvider) {
+        // 获取当前工作区路径
+        this.workspace = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || '';
+    }
 
     // 设置扩展上下文（用于持久化）
     setContext(context: vscode.ExtensionContext) {
@@ -126,7 +152,123 @@ export class MCPServer {
         return content;
     }
 
-    start() {
+    // 查找可用端口
+    private async findAvailablePort(): Promise<number> {
+        for (let port = MCPServer.PORT_MIN; port <= MCPServer.PORT_MAX; port++) {
+            if (await this.isPortAvailable(port)) {
+                return port;
+            }
+        }
+        throw new Error('No available port in range');
+    }
+
+    private isPortAvailable(port: number): Promise<boolean> {
+        return new Promise((resolve) => {
+            const server = http.createServer();
+            server.once('error', () => resolve(false));
+            server.once('listening', () => {
+                server.close();
+                resolve(true);
+            });
+            server.listen(port, '127.0.0.1');
+        });
+    }
+
+    // 读取端口注册表
+    private readRegistry(): PortRegistry {
+        try {
+            if (fs.existsSync(MCPServer.REGISTRY_FILE)) {
+                const content = fs.readFileSync(MCPServer.REGISTRY_FILE, 'utf-8');
+                return JSON.parse(content);
+            }
+        } catch (e) {
+            console.error('Failed to read registry:', e);
+        }
+        return { windows: [] };
+    }
+
+    // 写入端口注册表
+    private writeRegistry(registry: PortRegistry): void {
+        try {
+            if (!fs.existsSync(MCPServer.REGISTRY_DIR)) {
+                fs.mkdirSync(MCPServer.REGISTRY_DIR, { recursive: true });
+            }
+            fs.writeFileSync(MCPServer.REGISTRY_FILE, JSON.stringify(registry, null, 2));
+        } catch (e) {
+            console.error('Failed to write registry:', e);
+        }
+    }
+
+    // 注册当前窗口
+    private registerWindow(): void {
+        const registry = this.readRegistry();
+        
+        // 清理无效的注册（进程不存在）
+        registry.windows = registry.windows.filter(entry => {
+            try {
+                process.kill(entry.pid, 0);  // 检查进程是否存在
+                return true;
+            } catch {
+                return false;
+            }
+        });
+        
+        // 移除相同工作区的旧注册
+        registry.windows = registry.windows.filter(entry => entry.workspace !== this.workspace);
+        
+        // 添加新注册
+        registry.windows.push({
+            port: this.port,
+            workspace: this.workspace,
+            lastActive: Date.now(),
+            pid: process.pid
+        });
+        
+        this.writeRegistry(registry);
+    }
+
+    // 更新心跳
+    private updateHeartbeat(): void {
+        const registry = this.readRegistry();
+        const entry = registry.windows.find(e => e.port === this.port && e.pid === process.pid);
+        if (entry) {
+            entry.lastActive = Date.now();
+            this.writeRegistry(registry);
+        }
+    }
+
+    // 注销当前窗口
+    private unregisterWindow(): void {
+        const registry = this.readRegistry();
+        registry.windows = registry.windows.filter(
+            entry => !(entry.port === this.port && entry.pid === process.pid)
+        );
+        this.writeRegistry(registry);
+    }
+
+    // 启动心跳定时器
+    private startHeartbeat(): void {
+        // 每秒更新一次心跳
+        this.heartbeatInterval = setInterval(() => {
+            this.updateHeartbeat();
+        }, 1000);
+    }
+
+    async start() {
+        try {
+            // 查找可用端口
+            this.port = await this.findAvailablePort();
+            
+            // 注册到端口注册表
+            this.registerWindow();
+            
+            // 启动心跳
+            this.startHeartbeat();
+        } catch (e) {
+            console.error('Failed to start MCP server:', e);
+            return;
+        }
+
         this.server = http.createServer(async (req, res) => {
             // CORS headers
             res.setHeader('Access-Control-Allow-Origin', '*');
@@ -355,6 +497,15 @@ export class MCPServer {
     }
 
     stop() {
+        // 停止心跳
+        if (this.heartbeatInterval) {
+            clearInterval(this.heartbeatInterval);
+            this.heartbeatInterval = null;
+        }
+        
+        // 注销窗口
+        this.unregisterWindow();
+        
         if (this.server) {
             this.server.close();
             this.server = null;

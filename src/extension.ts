@@ -159,6 +159,20 @@ export function activate(context: vscode.ExtensionContext) {
             });
         })
     );
+
+    // 标题栏设置按钮
+    context.subscriptions.push(
+        vscode.commands.registerCommand('feedbackPanel.openSettings', () => {
+            provider.openSettings();
+        })
+    );
+
+    // 标题栏清除历史按钮
+    context.subscriptions.push(
+        vscode.commands.registerCommand('feedbackPanel.clearHistory', () => {
+            provider.clearHistory();
+        })
+    );
 }
 
 export function deactivate() {

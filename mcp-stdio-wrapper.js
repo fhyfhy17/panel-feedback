@@ -7,8 +7,14 @@
 const http = require('http');
 const readline = require('readline');
 const crypto = require('crypto');
+const fs = require('fs');
+const path = require('path');
+const os = require('os');
 
-const SERVER_PORT = 19876;
+// 端口注册表配置
+const REGISTRY_DIR = path.join(os.homedir(), '.panel-feedback');
+const REGISTRY_FILE = path.join(REGISTRY_DIR, 'ports.json');
+const DEFAULT_PORT = 19876;
 const POLL_INTERVAL = 500;  // 500ms 轮询间隔
 const MAX_POLL_TIME = 86400000 * 7;  // 最长等待 7 天
 
@@ -17,6 +23,40 @@ const rl = readline.createInterface({
     output: process.stdout,
     terminal: false
 });
+
+// 读取端口注册表
+function readRegistry() {
+    try {
+        if (fs.existsSync(REGISTRY_FILE)) {
+            const content = fs.readFileSync(REGISTRY_FILE, 'utf-8');
+            return JSON.parse(content);
+        }
+    } catch (e) {
+        process.stderr.write(`Failed to read registry: ${e.message}\n`);
+    }
+    return { windows: [] };
+}
+
+// 根据工作区或最近活动时间选择目标端口
+function selectTargetPort(workspace) {
+    const registry = readRegistry();
+    
+    if (registry.windows.length === 0) {
+        return DEFAULT_PORT;  // 回退到默认端口
+    }
+    
+    // 如果指定了工作区，精确匹配
+    if (workspace) {
+        const entry = registry.windows.find(e => e.workspace === workspace);
+        if (entry) {
+            return entry.port;
+        }
+    }
+    
+    // 否则选择最近活动的窗口
+    const sorted = [...registry.windows].sort((a, b) => b.lastActive - a.lastActive);
+    return sorted[0].port;
+}
 
 // 生成唯一请求 ID
 function generateRequestId() {
@@ -29,13 +69,14 @@ function sleep(ms) {
 }
 
 // 发送 HTTP 请求
-function sendRequest(path, data) {
+function sendRequest(urlPath, data, targetPort) {
+    const port = targetPort || DEFAULT_PORT;
     return new Promise((resolve, reject) => {
         const postData = JSON.stringify(data);
         const options = {
             hostname: '127.0.0.1',
-            port: SERVER_PORT,
-            path: path,
+            port: port,
+            path: urlPath,
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -76,13 +117,13 @@ function sendRequest(path, data) {
 }
 
 // 轮询获取结果
-async function pollForResult(requestId) {
+async function pollForResult(requestId, targetPort) {
     const startTime = Date.now();
     let connectionRefusedCount = 0;
     
     while (Date.now() - startTime < MAX_POLL_TIME) {
         try {
-            const result = await sendRequest('/poll', { requestId });
+            const result = await sendRequest('/poll', { requestId }, targetPort);
             
             // 检查连接被拒绝
             if (result._connectionRefused) {
@@ -120,11 +161,17 @@ async function pollForResult(requestId) {
 async function handleToolCall(mcpId, params) {
     const requestId = generateRequestId();
     
+    // 从参数中提取 workspace（如果有）
+    const workspace = params?.arguments?.workspace || '';
+    const targetPort = selectTargetPort(workspace);
+    
+    process.stderr.write(`Routing to port ${targetPort}${workspace ? ` (workspace: ${workspace})` : ' (most recent)'}\n`);
+    
     // 1. 提交请求（快速返回）
     const submitResult = await sendRequest('/submit', {
         requestId,
         params
-    });
+    }, targetPort);
     
     if (submitResult._connectionRefused) {
         return {
@@ -147,7 +194,7 @@ async function handleToolCall(mcpId, params) {
     
     // 2. 轮询等待结果
     try {
-        const result = await pollForResult(requestId);
+        const result = await pollForResult(requestId, targetPort);
         return {
             jsonrpc: '2.0',
             id: mcpId,
@@ -163,8 +210,9 @@ async function handleToolCall(mcpId, params) {
 }
 
 // 处理其他 MCP 请求（直接转发）
-async function handleOtherRequest(request) {
-    const result = await sendRequest('/', request);
+async function handleOtherRequest(request, workspace) {
+    const targetPort = selectTargetPort(workspace);
+    const result = await sendRequest('/', request, targetPort);
     
     if (result._connectionRefused) {
         return {
@@ -224,6 +272,10 @@ rl.on('line', async (line) => {
                                     type: 'array',
                                     items: { type: 'string' },
                                     description: '预定义的选项按钮列表'
+                                },
+                                workspace: {
+                                    type: 'string',
+                                    description: '目标工作区路径（可选，用于多窗口时精确路由）'
                                 }
                             },
                             required: ['message']

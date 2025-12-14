@@ -236,6 +236,12 @@ export class FeedbackPanelProvider implements vscode.WebviewViewProvider {
         this._updateHistoryInView();
     }
 
+    public openSettings() {
+        if (this._view) {
+            this._view.webview.postMessage({ type: 'openSettings' });
+        }
+    }
+
     public async showMessage(message: string, options?: string[], requestId?: string): Promise<string> {
         this._currentMessage = message;
         this._currentOptions = options || [];
@@ -1096,6 +1102,10 @@ export class FeedbackPanelProvider implements vscode.WebviewViewProvider {
                             checkUpdateBtn.textContent = '🔄 Check for Updates';
                         }, 3000);
                     }
+                    break;
+                case 'openSettings':
+                    settingsModal.classList.add('show');
+                    vscode.postMessage({ type: 'getVersion' });
                     break;
             }
         });

@@ -2,7 +2,7 @@
   "name": "windsurf-feedback-panel",
   "displayName": "Windsurf Feedback Panel",
   "description": "侧边栏交互反馈面板，支持 MCP 协议",
-  "version": "1.3.1",
+  "version": "1.4.0",
   "publisher": "fhyfhy17",
   "repository": {
     "type": "git",
@@ -45,8 +45,32 @@
       {
         "command": "feedbackPanel.copyMcpConfig",
         "title": "Panel Feedback: Copy MCP Config"
+      },
+      {
+        "command": "feedbackPanel.openSettings",
+        "title": "Settings",
+        "icon": "$(gear)"
+      },
+      {
+        "command": "feedbackPanel.clearHistory",
+        "title": "Clear History",
+        "icon": "$(trash)"
       }
-    ]
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "feedbackPanel.clearHistory",
+          "when": "view == feedbackPanel.view",
+          "group": "navigation@1"
+        },
+        {
+          "command": "feedbackPanel.openSettings",
+          "when": "view == feedbackPanel.view",
+          "group": "navigation@2"
+        }
+      ]
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
