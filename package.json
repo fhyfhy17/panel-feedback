@@ -2,7 +2,7 @@
   "name": "windsurf-feedback-panel",
   "displayName": "Windsurf Feedback Panel",
   "description": "侧边栏交互反馈面板，支持 MCP 协议",
-  "version": "1.4.9",
+  "version": "1.4.12",
   "publisher": "fhyfhy17",
   "repository": {
     "type": "git",

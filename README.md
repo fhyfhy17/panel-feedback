@@ -8,7 +8,7 @@
 [![MCP](https://img.shields.io/badge/MCP-Compatible-blue.svg)](https://modelcontextprotocol.io)
 
 > **The Next-Gen AI Feedback Experience - Embedded in Your IDE**
-> 
+>
 > *Stop the pop-ups. Start the flow.*
 
 🚫 **Tired of pop-up windows interrupting your coding flow?**  
@@ -20,8 +20,9 @@
 Born as an evolution of [寸止](https://github.com/imhuso/cunzhi), Panel Feedback takes the concept further with a **non-intrusive, embedded panel** that stays right where you need it.
 
 ### 🎯 Perfect for
+
 - **Claude** / **GPT** / **Gemini** users with MCP support
-- **VS Code** / **Windsurf** / **Cursor** developers
+- **VS Code** / **Windsurf** / **Cursor** / **Antigravity** developers
 - Anyone who values **uninterrupted workflow**
 
 [中文文档](./README_CN.md)
@@ -48,6 +49,7 @@ Born as an evolution of [寸止](https://github.com/imhuso/cunzhi), Panel Feedba
 ## 📸 Screenshots
 
 ### Sidebar Integration
+
 ![Sidebar](./screenshots/sidebar.png)
 
 The feedback panel lives in your IDE - always visible, never intrusive.
@@ -59,6 +61,7 @@ The feedback panel lives in your IDE - always visible, never intrusive.
 Download `.vsix` from [**Releases**](https://github.com/fhyfhy17/panel-feedback/releases/latest)
 
 In VS Code/Windsurf:
+
 - `Cmd+Shift+P` → `Extensions: Install from VSIX...` → Select the downloaded file
 
 #### ⚠️ Cursor Users
@@ -68,9 +71,11 @@ Cursor requires an extra step before installing:
 1. Open Settings (`Cmd+,`)
 2. Search for `activityBar.orientation`
 3. Add this to your `settings.json`:
+
    ```json
    "workbench.activityBar.orientation": "vertical"
    ```
+
 4. Restart Cursor
 5. Now you can install the `.vsix` file
 
@@ -91,9 +96,11 @@ The extension includes an MCP server. You need to tell your AI where to find it.
 2. **Paste to MCP config file:**
    - Open `~/.codeium/windsurf/mcp_config.json` (Windsurf)
    - Or `~/.cursor/mcp.json` (Cursor)
+   - Or `~/.gemini/antigravity/mcp_config.json` (Antigravity)
    - Add the copied content to `"mcpServers": { ... }`
 
 Example:
+
 ```json
 {
   "mcpServers": {

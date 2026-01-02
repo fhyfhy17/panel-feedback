@@ -53,9 +53,36 @@ function readPidRegistry(extensionHostPid) {
 
 function getParentPid(pid) {
     try {
-        const result = execSync(`ps -o ppid= -p ${pid}`, { encoding: 'utf-8' });
-        const parentPid = result.trim();
-        return parentPid;
+        if (os.platform() === 'win32') {
+            // Windows: 优先使用 PowerShell (WMIC 在 Win10+ 已废弃)
+            try {
+                const result = execSync(
+                    `powershell -Command "(Get-CimInstance Win32_Process -Filter 'ProcessId=${pid}').ParentProcessId"`,
+                    { encoding: 'utf-8', windowsHide: true }
+                );
+                const ppid = result.trim();
+                if (ppid && /^\d+$/.test(ppid)) {
+                    return ppid;
+                }
+            } catch {
+                // PowerShell 失败，尝试 WMIC (兼容旧版 Windows)
+                try {
+                    const result = execSync(
+                        `wmic process where ProcessId=${pid} get ParentProcessId /format:value`,
+                        { encoding: 'utf-8', windowsHide: true }
+                    );
+                    const match = result.match(/ParentProcessId=(\d+)/);
+                    if (match) return match[1];
+                } catch {
+                    // WMIC 也失败
+                }
+            }
+            return null;
+        } else {
+            // Unix: 使用 ps 命令
+            const result = execSync(`ps -o ppid= -p ${pid}`, { encoding: 'utf-8' });
+            return result.trim();
+        }
     } catch {
         return null;
     }

@@ -9,7 +9,7 @@
 [![Windsurf](https://img.shields.io/badge/Windsurf-Compatible-green.svg)](https://codeium.com/windsurf)
 
 > **下一代 AI 反馈体验 - 嵌入式 IDE 面板**
-> 
+>
 > *告别弹窗，专注流程。*
 
 🚫 **厌倦了弹窗打断你的编码思路？**  
@@ -21,8 +21,9 @@
 作为 [寸止](https://github.com/imhuso/cunzhi) 的进化版本，Panel Feedback 采用**非侵入式的内嵌面板**，让 AI 反馈体验更上一层楼。
 
 ### 🎯 适用人群
+
 - 使用 **Claude** / **GPT** / **Gemini** 等支持 MCP 的 AI 用户
-- **VS Code** / **Windsurf** / **Cursor** 开发者
+- **VS Code** / **Windsurf** / **Cursor** / **Antigravity** 开发者
 - 追求**不被打断的工作流**的所有人
 
 [English](./README.md)
@@ -49,6 +50,7 @@
 ## 📸 效果展示
 
 ### 侧边栏集成
+
 ![Sidebar](./screenshots/sidebar.png)
 
 反馈面板驻留在 IDE 中 - 始终可见，永不打扰。
@@ -60,6 +62,7 @@
 下载 `.vsix`：[**发布页面**](https://github.com/fhyfhy17/panel-feedback/releases/latest)
 
 在 VS Code/Windsurf 中：
+
 - `Cmd+Shift+P` → `Extensions: Install from VSIX...` → 选择下载的文件
 
 #### ⚠️ Cursor 用户注意
@@ -69,9 +72,11 @@ Cursor 安装前需要额外配置：
 1. 打开设置 (`Cmd+,`)
 2. 搜索 `activityBar.orientation`
 3. 在 `settings.json` 中添加：
+
    ```json
    "workbench.activityBar.orientation": "vertical"
    ```
+
 4. 重启 Cursor
 5. 然后再安装 `.vsix` 文件
 
@@ -92,9 +97,11 @@ Cursor 安装前需要额外配置：
 2. **粘贴到 MCP 配置文件：**
    - 打开 `~/.codeium/windsurf/mcp_config.json` (Windsurf)
    - 或 `~/.cursor/mcp.json` (Cursor)
+   - 或 `~/.gemini/antigravity/mcp_config.json` (Antigravity)
    - 将复制的内容添加到 `"mcpServers": { ... }` 中
 
 示例：
+
 ```json
 {
   "mcpServers": {

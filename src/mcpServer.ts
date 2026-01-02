@@ -3,6 +3,7 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
+import * as crypto from 'crypto';
 import { FeedbackPanelProvider } from './FeedbackPanelProvider';
 
 // 端口注册表接口
@@ -51,7 +52,7 @@ export class MCPServer {
     private context: vscode.ExtensionContext | null = null;
     private workspace: string = '';
     private vscodePid: string = '';
-    
+
     // 端口范围
     private static readonly PORT_MIN = 19876;
     private static readonly PORT_MAX = 19899;
@@ -103,11 +104,11 @@ export class MCPServer {
     // 从持久化存储恢复未完成请求
     private restorePendingRequests() {
         if (!this.context) return;
-        
+
         const stored = this.context.globalState.get<PendingRequest[]>('pendingRequests', []);
         const now = Date.now();
         const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
-        
+
         for (const req of stored) {
             // 只恢复 7 天内的 pending 请求
             if (req.status === 'pending' && (now - req.createdAt) < SEVEN_DAYS) {
@@ -116,14 +117,14 @@ export class MCPServer {
                 this.processRequest(req);
             }
         }
-        
+
         console.log(`Restored ${this.pendingRequests.size} pending requests`);
     }
 
     // 持久化请求状态
     private persistRequests() {
         if (!this.context) return;
-        
+
         const requests = Array.from(this.pendingRequests.values());
         this.context.globalState.update('pendingRequests', requests);
     }
@@ -132,16 +133,16 @@ export class MCPServer {
     private async processRequest(request: PendingRequest) {
         try {
             const { message, predefined_options } = request.params.arguments || {};
-            
+
             const feedback = await this.provider.showMessage(
                 message || '',
                 predefined_options,
                 request.id
             );
-            
+
             // 解析反馈内容
             const content = this.parseResponse(feedback);
-            
+
             // 更新请求状态
             request.status = 'completed';
             request.result = { content };
@@ -155,16 +156,16 @@ export class MCPServer {
 
     private parseResponse(feedback: string): any[] {
         const content: any[] = [];
-        
+
         try {
             const parsed = JSON.parse(feedback);
-            if (parsed.text) {
-                content.push({ type: 'text', text: parsed.text });
-            }
+            const textContent = parsed.text || '';
+
             if (parsed.images && Array.isArray(parsed.images)) {
                 for (const imageDataUrl of parsed.images) {
                     const match = imageDataUrl.match(/^data:([^;]+);base64,(.+)$/);
                     if (match) {
+                        // 统一返回 MCP 标准的 image 类型
                         content.push({
                             type: 'image',
                             data: match[2],
@@ -173,14 +174,18 @@ export class MCPServer {
                     }
                 }
             }
+
+            if (textContent) {
+                content.push({ type: 'text', text: textContent });
+            }
         } catch {
             content.push({ type: 'text', text: feedback });
         }
-        
+
         if (content.length === 0) {
             content.push({ type: 'text', text: '' });
         }
-        
+
         return content;
     }
 
@@ -212,7 +217,7 @@ export class MCPServer {
     // 注册当前窗口
     private registerWindow(): void {
         const registry = this.readRegistry();
-        
+
         // 清理无效的注册（进程不存在）
         registry.windows = registry.windows.filter(entry => {
             try {
@@ -222,10 +227,10 @@ export class MCPServer {
                 return false;
             }
         });
-        
+
         // 移除同一进程的旧注册（同一个 Extension Host 重启/重复注册）
         registry.windows = registry.windows.filter(entry => entry.pid !== process.pid);
-        
+
         // 添加新注册
         registry.windows.push({
             port: this.port,
@@ -234,7 +239,7 @@ export class MCPServer {
             pid: process.pid,
             vscodePid: this.vscodePid
         });
-        
+
         this.writeRegistry(registry);
         this.writePidRegistry();
     }
@@ -294,7 +299,7 @@ export class MCPServer {
                         // 兼容旧版请求
                         response = await this.handleRequest(data);
                     }
-                    
+
                     res.setHeader('Content-Type', 'application/json');
                     res.writeHead(200);
                     res.end(JSON.stringify(response));
@@ -342,7 +347,7 @@ export class MCPServer {
     private async handleSubmit(data: any): Promise<any> {
         // 收到 MCP 请求时更新活动时间
         this.updateLastActive();
-        
+
         const { requestId, params } = data;
 
         const request: PendingRequest = {
@@ -418,20 +423,20 @@ export class MCPServer {
             case 'tools/call':
                 if (params?.name === 'panel_feedback') {
                     const { message, predefined_options } = params.arguments || {};
-                    
+
                     try {
                         const feedback = await this.provider.showMessage(
                             message || '',
                             predefined_options
                         );
-                        
+
                         // 解析反馈内容，分离文本和图片
                         const content: any[] = [];
-                        
+
                         try {
                             // 尝试解析为 JSON（包含图片的情况）
                             const parsed = JSON.parse(feedback);
-                            
+
                             // 添加文本内容
                             if (parsed.text) {
                                 content.push({
@@ -439,7 +444,7 @@ export class MCPServer {
                                     text: parsed.text
                                 });
                             }
-                            
+
                             // 添加图片内容（使用 MCP 标准的 image content type）
                             if (parsed.images && Array.isArray(parsed.images)) {
                                 for (const imageDataUrl of parsed.images) {
@@ -461,7 +466,7 @@ export class MCPServer {
                                 text: feedback
                             });
                         }
-                        
+
                         // 确保至少有一个 content
                         if (content.length === 0) {
                             content.push({
@@ -469,7 +474,7 @@ export class MCPServer {
                                 text: ''
                             });
                         }
-                        
+
                         return {
                             jsonrpc: '2.0',
                             id,
@@ -517,7 +522,7 @@ export class MCPServer {
     stop() {
         // 注销窗口
         this.unregisterWindow();
-        
+
         if (this.server) {
             this.server.close();
             this.server = null;

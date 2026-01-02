@@ -17,15 +17,37 @@ const FIXED_NODE_PATH = path.join(FIXED_MCP_DIR, 'node');
  * 优先动态检测，失败则回退到常见路径
  */
 function getNodePath(): string {
+    const isWindows = os.platform() === 'win32';
+    const command = isWindows ? 'where node' : 'which node';
+    
     try {
-        const nodePath = execSync('which node', { encoding: 'utf-8' }).trim();
-        if (nodePath) {
-            return nodePath;
+        const output = execSync(command, { encoding: 'utf-8' }).trim();
+        if (output) {
+            // Windows 的 where 可能返回多行，取第一行
+            const nodePath = output.split(/\r?\n/)[0];
+            if (nodePath) {
+                return nodePath;
+            }
         }
     } catch (e) {
         // 忽略错误
     }
+    
     // 回退到常见路径
+    if (isWindows) {
+        // Windows 常见 Node.js 安装路径
+        const commonPaths = [
+            path.join(process.env.ProgramFiles || 'C:\\Program Files', 'nodejs', 'node.exe'),
+            path.join(process.env.LOCALAPPDATA || '', 'Programs', 'node', 'node.exe'),
+            'C:\\Program Files\\nodejs\\node.exe'
+        ];
+        for (const p of commonPaths) {
+            if (fs.existsSync(p)) {
+                return p;
+            }
+        }
+        return 'node.exe'; // 依赖 PATH
+    }
     return '/usr/local/bin/node';
 }
 
