@@ -1,5 +1,8 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
+import * as fs from 'fs';
+import * as os from 'os';
+import * as crypto from 'crypto';
 
 interface ChatMessage {
     role: 'ai' | 'user';
@@ -8,17 +11,37 @@ interface ChatMessage {
     images?: string[];
 }
 
+// 用户响应接口 - 用于 CLI 脚本模式
+export interface UserResponse {
+    action: 'continue' | 'end' | 'instruction' | 'error';
+    text: string;
+    images: string[];  // 图片文件路径
+    workspaceRoot?: string; // 工作区根目录路径
+    requestId?: string;
+    error?: string;
+}
+
 export class FeedbackPanelProvider implements vscode.WebviewViewProvider {
     public static readonly viewType = 'feedbackPanel.view';
-    
+
     private _view?: vscode.WebviewView;
     private _pendingResolve?: (value: string) => void;
     private _currentMessage: string = '';
     private _currentOptions: string[] = [];
     private _currentRequestId?: string;
     private _chatHistory: ChatMessage[] = [];
+    private _port: number = 0;
 
-    constructor(private readonly _extensionUri: vscode.Uri) {}
+    // 用户响应事件
+    private _onUserResponse = new vscode.EventEmitter<UserResponse>();
+    public onUserResponse = this._onUserResponse.event;
+
+    constructor(private readonly _extensionUri: vscode.Uri) { }
+
+    public setPort(port: number) {
+        this._port = port;
+        this._view?.webview.postMessage({ type: 'setPort', port });
+    }
 
     public resolveWebviewView(
         webviewView: vscode.WebviewView,
@@ -66,18 +89,18 @@ export class FeedbackPanelProvider implements vscode.WebviewViewProvider {
         const ext = vscode.extensions.getExtension('fhyfhy17.windsurf-feedback-panel');
         const currentVersion = ext?.packageJSON.version || '0.0.0';
         const isZh = vscode.env.language.startsWith('zh');
-        
+
         const https = require('https');
         const fs = require('fs');
         const os = require('os');
         const path = require('path');
-        
+
         const options = {
             hostname: 'api.github.com',
             path: '/repos/fhyfhy17/panel-feedback/releases/latest',
             headers: { 'User-Agent': 'VSCode-Extension' }
         };
-        
+
         https.get(options, (res: any) => {
             let data = '';
             res.on('data', (chunk: string) => data += chunk);
@@ -86,30 +109,30 @@ export class FeedbackPanelProvider implements vscode.WebviewViewProvider {
                     const release = JSON.parse(data);
                     const latestVersion = release.tag_name?.replace('v', '') || '';
                     const hasUpdate = this._compareVersions(latestVersion, currentVersion) > 0;
-                    
+
                     // Find vsix asset
                     const vsixAsset = release.assets?.find((a: any) => a.name.endsWith('.vsix'));
-                    
-                    this._view?.webview.postMessage({ 
-                        type: 'updateResult', 
-                        hasUpdate, 
+
+                    this._view?.webview.postMessage({
+                        type: 'updateResult',
+                        hasUpdate,
                         latestVersion,
-                        downloadUrl: release.html_url 
+                        downloadUrl: release.html_url
                     });
-                    
+
                     if (hasUpdate && vsixAsset) {
-                        const msg = isZh 
-                            ? `🎉 Panel Feedback v${latestVersion} 可用！` 
+                        const msg = isZh
+                            ? `🎉 Panel Feedback v${latestVersion} 可用！`
                             : `🎉 Panel Feedback v${latestVersion} is available!`;
                         const installBtn = isZh ? '下载并安装' : 'Install';
                         const laterBtn = isZh ? '稍后' : 'Later';
-                        
+
                         vscode.window.showInformationMessage(msg, installBtn, laterBtn)
-                        .then(action => {
-                            if (action === installBtn) {
-                                this._downloadAndInstall(vsixAsset.browser_download_url, latestVersion, isZh);
-                            }
-                        });
+                            .then(action => {
+                                if (action === installBtn) {
+                                    this._downloadAndInstall(vsixAsset.browser_download_url, latestVersion, isZh);
+                                }
+                            });
                     } else if (hasUpdate) {
                         // No vsix asset, just open release page
                         vscode.env.openExternal(vscode.Uri.parse(release.html_url));
@@ -128,10 +151,10 @@ export class FeedbackPanelProvider implements vscode.WebviewViewProvider {
         const fs = require('fs');
         const os = require('os');
         const path = require('path');
-        
+
         const tmpDir = os.tmpdir();
         const vsixPath = path.join(tmpDir, `windsurf-feedback-panel-${version}.vsix`);
-        
+
         const downloadMsg = isZh ? '正在下载更新...' : 'Downloading update...';
         vscode.window.withProgress({
             location: vscode.ProgressLocation.Notification,
@@ -140,7 +163,7 @@ export class FeedbackPanelProvider implements vscode.WebviewViewProvider {
         }, async () => {
             return new Promise<void>((resolve, reject) => {
                 const file = fs.createWriteStream(vsixPath);
-                
+
                 // Follow redirects
                 const download = (downloadUrl: string) => {
                     https.get(downloadUrl, { headers: { 'User-Agent': 'VSCode-Extension' } }, (res: any) => {
@@ -148,43 +171,43 @@ export class FeedbackPanelProvider implements vscode.WebviewViewProvider {
                             download(res.headers.location);
                             return;
                         }
-                        
+
                         res.pipe(file);
                         file.on('finish', () => {
                             file.close();
                             resolve();
                         });
                     }).on('error', (err: Error) => {
-                        fs.unlink(vsixPath, () => {});
+                        fs.unlink(vsixPath, () => { });
                         reject(err);
                     });
                 };
-                
+
                 download(url);
             });
         }).then(() => {
-            const successMsg = isZh 
-                ? `下载完成！是否立即安装 v${version}？` 
+            const successMsg = isZh
+                ? `下载完成！是否立即安装 v${version}？`
                 : `Download complete! Install v${version} now?`;
             const installBtn = isZh ? '安装并重启' : 'Install & Reload';
             const cancelBtn = isZh ? '取消' : 'Cancel';
-            
+
             vscode.window.showInformationMessage(successMsg, installBtn, cancelBtn)
-            .then(action => {
-                if (action === installBtn) {
-                    vscode.commands.executeCommand('workbench.extensions.installExtension', vscode.Uri.file(vsixPath))
-                    .then(() => {
-                        const reloadMsg = isZh ? '安装成功！是否重新加载窗口？' : 'Installed! Reload window?';
-                        const reloadBtn = isZh ? '重新加载' : 'Reload';
-                        vscode.window.showInformationMessage(reloadMsg, reloadBtn)
-                        .then(action => {
-                            if (action === reloadBtn) {
-                                vscode.commands.executeCommand('workbench.action.reloadWindow');
-                            }
-                        });
-                    });
-                }
-            });
+                .then(action => {
+                    if (action === installBtn) {
+                        vscode.commands.executeCommand('workbench.extensions.installExtension', vscode.Uri.file(vsixPath))
+                            .then(() => {
+                                const reloadMsg = isZh ? '安装成功！是否重新加载窗口？' : 'Installed! Reload window?';
+                                const reloadBtn = isZh ? '重新加载' : 'Reload';
+                                vscode.window.showInformationMessage(reloadMsg, reloadBtn)
+                                    .then(action => {
+                                        if (action === reloadBtn) {
+                                            vscode.commands.executeCommand('workbench.action.reloadWindow');
+                                        }
+                                    });
+                            });
+                    }
+                });
         }, () => {
             const errMsg = isZh ? '下载失败，请手动下载' : 'Download failed, please download manually';
             vscode.window.showErrorMessage(errMsg);
@@ -204,24 +227,66 @@ export class FeedbackPanelProvider implements vscode.WebviewViewProvider {
     }
 
     private _handleSubmit(text: string, images: string[]) {
+        console.log(`[PanelFeedback] _handleSubmit called with text: ${text}, _currentRequestId: ${this._currentRequestId}`);
+        // 记录用户回复到历史
+        this._chatHistory.push({
+            role: 'user',
+            content: text,
+            timestamp: Date.now(),
+            images: images.length > 0 ? images : undefined
+        });
+        this._updateHistoryInView();
+
+        // 处理图片：保存到系统临时目录，避免路径污染
+        const savedImages: string[] = [];
+        const tempDir = os.tmpdir();
+        const uniqueId = crypto.randomBytes(4).toString('hex');
+
+        const ensureDir = (dir: string) => {
+            if (!fs.existsSync(dir)) {
+                fs.mkdirSync(dir, { recursive: true });
+            }
+        };
+
+        // 直接使用临时目录
+        for (let i = 0; i < images.length; i++) {
+            try {
+                const img = images[i];
+                const base64Data = img.replace(/^data:image\/\w+;base64,/, '');
+                const imgPath = path.join(tempDir, `pf_img_${uniqueId}_${i}.png`);
+                fs.writeFileSync(imgPath, base64Data, 'base64');
+                savedImages.push(imgPath);
+            } catch (e) {
+                console.error(`[PanelFeedback] Failed to save image ${i}:`, e);
+            }
+        }
+
+        // 确定 action 类型
+        let action: UserResponse['action'];
+        if (!text && savedImages.length === 0) {
+            action = 'continue';
+        } else {
+            action = 'instruction';
+        }
+
+        // 发射用户响应事件（给 HTTP 服务器）
+        this._onUserResponse.fire({
+            action,
+            text,
+            images: savedImages,
+            requestId: this._currentRequestId
+        });
+
+        // 兼容旧的 Promise 模式
         if (this._pendingResolve) {
-            // 记录用户回复到历史
-            this._chatHistory.push({
-                role: 'user',
-                content: text,
-                timestamp: Date.now(),
-                images: images.length > 0 ? images : undefined
-            });
-            this._updateHistoryInView();
-            
-            const result = images.length > 0 
+            const result = images.length > 0
                 ? JSON.stringify({ text, images })
                 : text;
             this._pendingResolve(result);
             this._pendingResolve = undefined;
         }
     }
-    
+
     private _updateHistoryInView() {
         if (this._view) {
             this._view.webview.postMessage({
@@ -230,7 +295,7 @@ export class FeedbackPanelProvider implements vscode.WebviewViewProvider {
             });
         }
     }
-    
+
     public clearHistory() {
         this._chatHistory = [];
         this._updateHistoryInView();
@@ -243,9 +308,11 @@ export class FeedbackPanelProvider implements vscode.WebviewViewProvider {
     }
 
     public async showMessage(message: string, options?: string[], requestId?: string): Promise<string> {
+        console.log(`[PanelFeedback] showMessage called with requestId: ${requestId}`);
         this._currentMessage = message;
         this._currentOptions = options || [];
         this._currentRequestId = requestId;
+        console.log(`[PanelFeedback] _currentRequestId set to: ${this._currentRequestId}`);
 
         // 记录 AI 消息到历史
         this._chatHistory.push({

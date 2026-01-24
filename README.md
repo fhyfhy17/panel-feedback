@@ -1,179 +1,62 @@
 # Panel Feedback 💬
 
-[🇨🇳 中文文档](./README_CN.md) | [🇺🇸 English](#panel-feedback-)
+> **让 AI 真正停下来听你说话 —— Windsurf 专属阻塞式交互面板**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![NPM Package](https://img.shields.io/badge/NPM-panel--feedback--mcp-red.svg)](https://www.npmjs.com/package/panel-feedback-mcp)
 [![VS Code](https://img.shields.io/badge/VS%20Code-Extension-007ACC.svg)](https://code.visualstudio.com/)
-[![MCP](https://img.shields.io/badge/MCP-Compatible-blue.svg)](https://modelcontextprotocol.io)
 
-> **The Next-Gen AI Feedback Experience - Embedded in Your IDE**
->
-> *Stop the pop-ups. Start the flow.*
-
-🚫 **Tired of pop-up windows interrupting your coding flow?**  
-🚫 **Annoyed by dialogs stealing your focus?**  
-🚫 **Context switching killing your productivity?**
-
-**Panel Feedback** solves all of this by bringing AI interaction directly into your IDE's sidebar - seamlessly integrated, always accessible, never intrusive.
-
-Born as an evolution of [寸止](https://github.com/imhuso/cunzhi), Panel Feedback takes the concept further with a **non-intrusive, embedded panel** that stays right where you need it.
-
-### 🎯 Perfect for
-
-- **Claude** / **GPT** / **Gemini** users with MCP support
-- **VS Code** / **Windsurf** / **Cursor** / **Antigravity** developers
-- Anyone who values **uninterrupted workflow**
-
-[中文文档](./README_CN.md)
-
-## ✨ Why Panel Feedback?
-
-| Feature | Panel Feedback | Traditional Pop-ups |
-|---------|---------------|---------------------|
-| **Location** | IDE Sidebar | Floating Window |
-| **Focus** | Never lost | Constantly interrupted |
-| **Integration** | Native feel | External tool |
-| **Image Support** | ✅ Paste/Drag/Upload | Limited |
-| **Markdown** | ✅ Full support | Varies |
-
-## 🌟 Features
-
-- 💬 **Embedded Panel** - Lives in your IDE sidebar, always accessible
-- 🎨 **Rich Markdown** - Beautiful rendering of AI responses
-- 📷 **Image Support** - Paste, drag & drop, or upload images
-- ⚡ **Quick Options** - Predefined buttons for fast responses
-- 🔌 **MCP Protocol** - Standard Model Context Protocol support
-- 🎯 **Zero Distraction** - No pop-ups, no focus stealing
-
-## 📸 Screenshots
-
-### Sidebar Integration
-
-![Sidebar](./screenshots/sidebar.png)
-
-The feedback panel lives in your IDE - always visible, never intrusive.
-
-## 🚀 Installation
-
-### Step 1️⃣ Install Extension
-
-Download `.vsix` from [**Releases**](https://github.com/fhyfhy17/panel-feedback/releases/latest)
-
-In VS Code/Windsurf:
-
-- `Cmd+Shift+P` → `Extensions: Install from VSIX...` → Select the downloaded file
-
-#### ⚠️ Cursor Users
-
-Cursor requires an extra step before installing:
-
-1. Open Settings (`Cmd+,`)
-2. Search for `activityBar.orientation`
-3. Add this to your `settings.json`:
-
-   ```json
-   "workbench.activityBar.orientation": "vertical"
-   ```
-
-4. Restart Cursor
-5. Now you can install the `.vsix` file
-
-This makes the sidebar vertical so the extension icon can be displayed.
-
-✅ Now you have the **Sidebar Panel UI**
+**Panel Feedback** 是一款专为 Windsurf (以及支持规则注入的 AI IDE) 打造的交互增强扩展。它通过创新的“阻塞式 CLI”架构，彻底解决了 AI 助手“自顾自跑任务、无法及时纠偏”的痛点。
 
 ---
 
-### Step 2️⃣ Configure MCP Server
+## 🔥 核心特性
 
-The extension includes an MCP server. You need to tell your AI where to find it.
+- 🛡️ **强力阻塞循环**：通过自动注入 `.windsurfrules`，强制 AI 在每一轮任务结束前必须通过脚本调用侧边栏面板。AI 不再会一口气烧掉你的 Token，而是每一步都听取你的反馈。
+- 🍎 **仅限 macOS 支持**：目前深度适配 macOS 环境，确保在 Windsurf 中的极致稳定。
+- 🏠 **原生侧边栏集成**：拒绝干扰性弹窗。所有交互都在 IDE 侧边栏完成，保持编码心流不中断。
+- 📷 **精准多模态视觉**：支持图片拖拽、粘贴上传。通过系统临时目录隔离技术，彻底消除了 AI 因为文件路径而产生的“路径幻觉”，让 AI 真正看清像素。
+- ⚡ **零配置启动**：无需配置复杂的 MCP Server，安装后一键初始化工作区即可开始。
+- 🕒 **无限等待**：脚本阻塞时间支持永久等待（Timeout: 0），给你充足的思考和回复时间。
 
-1. **Copy the config:**
-   - `Cmd+Shift+P` → `Panel Feedback: Copy MCP Config`
-   - This copies a JSON snippet to your clipboard
+## 🛠️ 工作原理
 
-2. **Paste to MCP config file:**
-   - Open `~/.codeium/windsurf/mcp_config.json` (Windsurf)
-   - Or `~/.cursor/mcp.json` (Cursor)
-   - Or `~/.gemini/antigravity/mcp_config.json` (Antigravity)
-   - Add the copied content to `"mcpServers": { ... }`
+1. **自动注入**：你在执行“初始化工作区”后，插件会向项目根目录注入一个 `feedback.cjs` 脚本 and `.windsurfrules` 规则。
+2. **规则约束**：规则会告知 AI：*“你必须在每次回复后执行此脚本才能继续”*。
+3. **阻塞交互**：由于脚本是以 `Blocking: true` 运行的命令，AI 会在此停下，直到你在侧边栏面板中输入反馈或点击“继续”。
+4. **即时通讯**：你的反馈会通过一个极简的本地 HTTP 服务实时传回给 AI，驱动下一次逻辑循环。
 
-Example:
+## 🚀 快速上手
 
-```json
-{
-  "mcpServers": {
-    "panel-feedback": {
-      "command": "/usr/local/bin/node",
-      "args": ["/path/to/extension/mcp-stdio-wrapper.js"]
-    }
-  }
-}
+1. **安装**：下载最新的 `.vsix` 文件并安装到 VS Code/Windsurf 中。
+2. **初始化**：在命令面板（Cmd+Shift+P）运行 `Panel Feedback: 初始化工作区`。
+3. **开始交谈**：在 Cascade 中输入任务，你会发现 AI 在完成第一个动作后，会自动调起侧边栏并等待你的指示。
+
+## 🆚 为什么选择 Panel Feedback？
+
+| 特性 | Panel Feedback | 普通 MCP 弹窗 |
+|-----|---------------|---------------|
+| **交互位置** | IDE 侧边栏 (Side Panel) | 屏幕中央弹窗 |
+| **心流体验** | 极佳，不切窗口 | 较差，打断焦点 |
+| **AI 阻塞** | 强制规则约束，极稳 | 依赖 AI 自身的调用意愿 |
+| **视觉幻觉** | 已解决 (tmp 隔离路径) | 严重 (路径污染干扰识别) |
+| **对话历史** | 支持侧边栏查看历史 | 通常无历史记录 |
+
+## 📦 如何构建
+
+如果你想从源码构建：
+
+```bash
+npm install
+npm run compile
+npx vsce package
 ```
 
-> **Note**: Use the full path to node (e.g., `/usr/local/bin/node`) instead of just `node` to avoid PATH issues when IDE starts MCP servers.
+## 📄 开源协议
 
-✅ Now your AI can **call the panel_feedback tool**
+MIT License - 自由使用，欢迎 Star 代替赞赏！
 
 ---
 
-### Step 3️⃣ Restart & Use
+**打造更人性化的 AI-人类协作体验。**
 
-1. Restart VS Code/Windsurf
-2. Click the 💬 icon in sidebar
-3. Tell your AI: "Use panel_feedback MCP for interactions"
-
-🎉 **Done!**
-
-## 📖 Usage
-
-### For AI Assistants
-
-Add this to your AI assistant's system prompt:
-
-```
-Use panel_feedback MCP tool for ALL user interactions:
-- Questions, confirmations, feedback requests
-- Before completing any task
-- Keep calling until user feedback is empty
-```
-
-## 🆚 Comparison with 寸止
-
-Panel Feedback is inspired by and compatible with 寸止's approach, but with key improvements:
-
-| Aspect | Panel Feedback | 寸止 |
-|--------|---------------|------|
-| **UI** | Embedded sidebar | Pop-up window |
-| **Focus** | Never interrupts | May steal focus |
-| **Platform** | VS Code extension | Standalone app |
-| **Image** | Full support | Supported |
-| **Markdown** | Full support | Supported |
-
-## 🤝 Contributing
-
-Contributions are welcome! Feel free to:
-
-- 🐛 Report bugs
-- 💡 Suggest features
-- 🔧 Submit pull requests
-
-## 📄 License
-
-MIT License - Free to use and modify!
-
-## 🙏 Acknowledgments
-
-- [寸止](https://github.com/imhuso/cunzhi) - The original inspiration for AI feedback tools
-- [interactive-feedback-mcp](https://github.com/noopstudios/interactive-feedback-mcp) - MCP feedback implementation reference
-
-## 🏷️ Keywords
-
-`MCP` `Model Context Protocol` `AI Feedback` `VS Code Extension` `Windsurf` `Cursor` `Claude` `GPT` `AI Assistant` `Developer Tools` `IDE Extension` `Non-intrusive` `Sidebar Panel` `Markdown` `Image Upload`
-
----
-
-**Made with ❤️ for better AI-human collaboration**
-
-⭐ **Star this repo if you find it useful!**
+⭐ **如果觉得有用，请在 GitHub 给个 Star！**

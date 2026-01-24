@@ -1,8 +1,8 @@
 {
   "name": "windsurf-feedback-panel",
-  "displayName": "Windsurf Feedback Panel",
-  "description": "侧边栏交互反馈面板，支持 MCP 协议",
-  "version": "1.4.12",
+  "displayName": "Panel Feedback",
+  "description": "侧边栏交互反馈面板 - 让 AI 停下来听你说话 (仅支持 macOS)",
+  "version": "2.1.0",
   "publisher": "fhyfhy17",
   "repository": {
     "type": "git",
@@ -15,7 +15,7 @@
     "Other"
   ],
   "activationEvents": [
-    "onStartupFinished"
+    "*"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -44,12 +44,16 @@
       },
       {
         "command": "feedbackPanel.copyMcpConfig",
-        "title": "Panel Feedback: Copy MCP Config"
+        "title": "Panel Feedback: 使用说明"
       },
       {
         "command": "feedbackPanel.openSettings",
         "title": "Settings",
         "icon": "$(gear)"
+      },
+      {
+        "command": "feedbackPanel.setupWorkspace",
+        "title": "Panel Feedback: 初始化工作区"
       },
       {
         "command": "feedbackPanel.clearHistory",

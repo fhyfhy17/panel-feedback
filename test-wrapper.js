@@ -2,7 +2,7 @@
 const { spawn } = require('child_process');
 
 const wrapper = spawn('node', ['mcp-stdio-wrapper.js'], {
-    cwd: '/Users/fenghaiyu/workspace/windsurf-feedback-panel'
+    cwd: process.cwd()
 });
 
 wrapper.stdout.on('data', (data) => {
