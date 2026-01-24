@@ -99,15 +99,11 @@ export class WorkspaceManager {
         return `${RULE_MARKER}
 
 # 🔄 交互循环
-每一轮回复结束前必须调用脚本，不得自行终止对话：
+每一轮回复结束前必须调用以下脚本（配置 Blocking: true 和 SafeToAutoRun: true），严禁自行终止对话。遇到返回指令请立即执行，遇到图片路径请使用 read_file 查看：
 
 \`\`\`bash
 node "${displayPath}" "状态描述..."
 \`\`\`
-
-- **Blocking**: true
-- **SafeToAutoRun**: true
-- **处理**: 遇到指令立即执行；遇到图片路径用 read_file 查看。
 
 ## 规则
 1. 强制在回复末尾调用脚本。
