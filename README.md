@@ -4,6 +4,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![VS Code](https://img.shields.io/badge/VS%20Code-Extension-007ACC.svg)](https://code.visualstudio.com/)
+[![Download](https://img.shields.io/badge/Download-VSIX-orange.svg)](https://github.com/fhyfhy17/panel-feedback/releases/latest)
 
 **Panel Feedback** 是一款专为 Windsurf (以及支持规则注入的 AI IDE) 打造的交互增强扩展。它通过创新的“阻塞式 CLI”架构，彻底解决了 AI 助手“自顾自跑任务、无法及时纠偏”的痛点。
 
@@ -18,18 +19,33 @@
 - ⚡ **零配置启动**：无需配置复杂的 MCP Server，安装后一键初始化工作区即可开始。
 - 🕒 **无限等待**：脚本阻塞时间支持永久等待（Timeout: 0），给你充足的思考和回复时间。
 
-## 🛠️ 工作原理
+## 🚀 快速上手 (安装与使用)
 
-1. **自动注入**：你在执行“初始化工作区”后，插件会向项目根目录注入一个 `feedback.cjs` 脚本 and `.windsurfrules` 规则。
-2. **规则约束**：规则会告知 AI：*“你必须在每次回复后执行此脚本才能继续”*。
-3. **阻塞交互**：由于脚本是以 `Blocking: true` 运行的命令，AI 会在此停下，直到你在侧边栏面板中输入反馈或点击“继续”。
-4. **即时通讯**：你的反馈会通过一个极简的本地 HTTP 服务实时传回给 AI，驱动下一次逻辑循环。
+1. **下载安装**：
+   从 [最新 Release 页面](https://github.com/fhyfhy17/panel-feedback/releases/latest) 下载 `.vsix` 文件，并拖入 Windsurf 完成安装。
 
-## 🚀 快速上手
+2. **初始化**：
+   在命令面板（`Cmd+Shift+P`）搜索并运行 `Panel Feedback: 初始化工作区`。
 
-1. **安装**：下载最新的 `.vsix` 文件并安装到 VS Code/Windsurf 中。
-2. **初始化**：在命令面板（Cmd+Shift+P）运行 `Panel Feedback: 初始化工作区`。
-3. **开始交谈**：在 Cascade 中输入任务，你会发现 AI 在完成第一个动作后，会自动调起侧边栏并等待你的指示。
+3. **核心规则 (AI 提示词)**：
+   运行初始化后，插件会自动在你的工作区生成 `.windsurfrules`。这就是让 AI 变听话的魔法：
+
+   ```markdown
+   # 🔄 交互循环
+   每一轮回复结束前必须调用脚本，不得自行终止对话：
+
+   ```bash
+   node "~/.panel-feedback/feedback.cjs" "状态描述..."
+   ```
+
+   - **Blocking**: true
+   - **SafeToAutoRun**: true
+   - **处理**: 遇到指令立即执行；遇到图片路径用 read_file 查看。
+
+   ```
+
+4. **开始交谈**：
+   在 Windsurf Cascade 中输入任务，AI 会在完成每个动作后自动调起侧边栏并静静等待你的指示。你可以输入新的反馈，或者直接按 `Ctrl+Enter` 让它继续。
 
 ## 🆚 为什么选择 Panel Feedback？
 
