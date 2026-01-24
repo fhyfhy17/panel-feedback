@@ -30,14 +30,12 @@
 3. **核心规则 (AI 提示词)**：
    运行初始化后，插件会自动在你的工作区生成 `.windsurfrules`。这就是让 AI 变听话的魔法：
 
-   ```markdown
-   # 🔄 交互循环
+   ### 🔄 交互循环
+
    每一轮回复结束前必须调用以下脚本（配置 Blocking: true 和 SafeToAutoRun: true），严禁自行终止对话。遇到返回指令请立即执行，遇到图片路径请使用 read_file 查看：
 
    ```bash
    node "~/.panel-feedback/feedback.cjs" "状态描述..."
-   ```
-
    ```
 
 4. **开始交谈**：
